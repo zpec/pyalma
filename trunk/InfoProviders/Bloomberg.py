@@ -37,6 +37,15 @@ TOPIC_STATUS = 14
 TOKEN_STATUS = 15
 
 #-------------------------------------------------------------------------------
+# Errors handling
+#-------------------------------------------------------------------------------
+
+class BloombergError(Exception):
+    """ No response from Bloomberg. """
+    
+    pass
+
+#-------------------------------------------------------------------------------
 # Bloomberg request functions
 #-------------------------------------------------------------------------------
 
@@ -86,9 +95,13 @@ def bdp(sec_list, fld_list, verbose=False, **kwargs):
         for r in response:
             tempdict[r] = pan.Series(response[r])
         data = pan.DataFrame(tempdict)
-        return(data)       
-    except Exception as e:
-        print('Errore: %s' % e)
+        if data:
+            return(data)
+        else:
+            raise BloombergError('No response from Bloomberg. Please check \
+request arguments: tickers and fields must be tuples or lists.')
+    except BloombergError:
+        raise
     finally:
         session.Stop()
         iterator = None
@@ -160,9 +173,13 @@ def bdh(sec_list, fld_list, start_date,
                 td[f] = pan.Series(response[r][f])
             tempdict[r] = pan.DataFrame(td)
         data = pan.Panel(tempdict)
-        return(data)
-    except Exception as e:
-        print('Errore: %s' % e)
+        if data[[d for d in data][0]]:
+            return(data)
+        else:
+            raise BloombergError('No response from Bloomberg. Please check \
+request arguments: tickers and fields must be tuples or lists.')
+    except BloombergError:
+        raise
     finally:
         session.Stop()
         iterator = None
